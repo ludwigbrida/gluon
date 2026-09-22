@@ -5,6 +5,9 @@ struct RectUniform {
     padding: vec2f,
 }
 
+@group(0) @binding(0)
+var<uniform> rectangle: RectUniform;
+
 struct VertexOutput {
     @builtin(position)
     position: vec4f,
@@ -13,18 +16,25 @@ struct VertexOutput {
 @vertex
 fn vertex_main(@builtin(vertex_index)index: u32) -> VertexOutput {
     let positions = array<vec2f, 6>(
-        vec2f(-0.75, 0.75),
-        vec2f(-0.25, 0.75),
-        vec2f(-0.75, 0.25),
-        vec2f(-0.75, 0.25),
-        vec2f(-0.25, 0.75),
-        vec2f(-0.25, 0.25),
+        vec2f(0.0, 0.0),
+        vec2f(1.0, 0.0),
+        vec2f(0.0, 1.0),
+        vec2f(0.0, 1.0),
+        vec2f(1.0, 0.0),
+        vec2f(1.0, 1.0),
     );
 
-    return VertexOutput(vec4f(positions[index], 0.0, 1.0));
+    let position = rectangle.rect.xy + positions[index] * rectangle.rect.zw;
+
+    return VertexOutput(vec4f(
+        position.x / rectangle.viewport.x * 2.0 - 1.0,
+        1.0 - position.y / rectangle.viewport.y * 2.0,
+        0.0,
+        1.0
+    ));
 }
 
 @fragment
 fn fragment_main() -> @location(0) vec4f {
-    return vec4f(0.1, 0.4, 0.9, 1.0);
+    return rectangle.color;
 }
