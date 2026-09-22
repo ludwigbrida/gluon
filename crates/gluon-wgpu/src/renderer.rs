@@ -1,5 +1,5 @@
 use gluon_core::DisplayList;
-use wgpu::Device;
+use wgpu::{CommandEncoder, Device, TextureView};
 
 pub struct Renderer;
 
@@ -8,5 +8,11 @@ impl Renderer {
     Self
   }
 
-  pub fn render(&self, _display_list: &DisplayList) {}
+  pub fn render(
+    &self,
+    _display_list: &DisplayList,
+    _encoder: &mut CommandEncoder,
+    _target: &TextureView,
+  ) {
+  }
 }
