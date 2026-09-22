@@ -218,6 +218,7 @@ version = "0.0.0"
 name = "gluon-wgpu"
 version = "0.0.0"
 dependencies = [
+ "bytemuck",
  "gluon-core",
  "wgpu",
 ]
