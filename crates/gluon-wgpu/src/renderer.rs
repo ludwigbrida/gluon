@@ -1,8 +1,9 @@
 use gluon_core::DisplayList;
 use wgpu::{
-  BlendState, ColorTargetState, ColorWrites, CommandEncoder, Device, FragmentState,
-  MultisampleState, PrimitiveState, RenderPipeline, RenderPipelineDescriptor,
-  ShaderModuleDescriptor, ShaderSource, TextureFormat, TextureView, VertexState,
+  BlendState, ColorTargetState, ColorWrites, CommandEncoder, Device, FragmentState, LoadOp,
+  MultisampleState, Operations, PrimitiveState, RenderPassColorAttachment, RenderPassDescriptor,
+  RenderPipeline, RenderPipelineDescriptor, ShaderModuleDescriptor, ShaderSource, StoreOp,
+  TextureFormat, TextureView, VertexState,
 };
 
 pub struct Renderer {
@@ -52,8 +53,29 @@ impl Renderer {
   pub fn render(
     &self,
     _display_list: &DisplayList,
-    _encoder: &mut CommandEncoder,
-    _target: &TextureView,
+    encoder: &mut CommandEncoder,
+    target: &TextureView,
   ) {
+    let render_pass_descriptor = &RenderPassDescriptor {
+      label: Some("gluon_render_pass"),
+      color_attachments: &[Some(RenderPassColorAttachment {
+        view: target,
+        depth_slice: None,
+        resolve_target: None,
+        ops: Operations {
+          load: LoadOp::Load,
+          store: StoreOp::Store,
+        },
+      })],
+      depth_stencil_attachment: None,
+      timestamp_writes: None,
+      occlusion_query_set: None,
+      multiview_mask: None,
+    };
+
+    let mut render_pass = encoder.begin_render_pass(render_pass_descriptor);
+
+    render_pass.set_pipeline(&self.pipeline);
+    render_pass.draw(0..6, 0..1);
   }
 }
