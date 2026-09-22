@@ -1,4 +1,4 @@
-use gluon::DisplayList;
+use gluon_core::DisplayList;
 use wgpu::Device;
 
 pub struct Renderer;

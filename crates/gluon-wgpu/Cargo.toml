@@ -5,5 +5,5 @@ publish = false
 edition.workspace = true
 
 [dependencies]
-gluon = { path = "../gluon" }
+gluon-core = { path = "../gluon-core" }
 wgpu = "30.0.1"

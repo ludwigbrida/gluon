@@ -1,5 +1,5 @@
 [package]
-name = "gluon"
+name = "gluon-core"
 version = "0.0.0"
 publish = false
 edition.workspace = true
