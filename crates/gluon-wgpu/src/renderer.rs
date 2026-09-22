@@ -53,6 +53,8 @@ impl Renderer {
   pub fn render(
     &self,
     _display_list: &DisplayList,
+    _width: u32,
+    _height: u32,
     encoder: &mut CommandEncoder,
     target: &TextureView,
   ) {
