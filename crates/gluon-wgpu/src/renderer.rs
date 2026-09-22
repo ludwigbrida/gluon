@@ -1,10 +1,10 @@
 use gluon_core::DisplayList;
-use wgpu::{CommandEncoder, Device, TextureView};
+use wgpu::{CommandEncoder, Device, TextureFormat, TextureView};
 
 pub struct Renderer;
 
 impl Renderer {
-  pub fn new(_device: &Device) -> Self {
+  pub fn new(_device: &Device, _target_format: TextureFormat) -> Self {
     Self
   }
 
