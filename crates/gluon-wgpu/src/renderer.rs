@@ -1,6 +1,6 @@
 use crate::RectUniform;
 use bytemuck::{Zeroable, bytes_of};
-use gluon_core::{DisplayList, Primitive};
+use gluon_core::DisplayList;
 use wgpu::util::{BufferInitDescriptor, DeviceExt};
 use wgpu::{
   BindGroup, BindGroupDescriptor, BindGroupEntry, BlendState, Buffer, BufferUsages,
@@ -90,7 +90,7 @@ impl Renderer {
     encoder: &mut CommandEncoder,
     target: &TextureView,
   ) {
-    let Some(Primitive::Rect { rect, color }) = display_list.primitives.first() else {
+    let Some((rect, color)) = display_list.rects().next() else {
       return;
     };
 

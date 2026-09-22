@@ -16,6 +16,15 @@ impl DisplayList {
   pub fn rect(&mut self, rect: Rect, color: Color) {
     self.primitives.push(Primitive::Rect { rect, color })
   }
+
+  pub fn rects(&self) -> impl Iterator<Item = (&Rect, &Color)> {
+    self
+      .primitives
+      .iter()
+      .filter_map(|primitive| match primitive {
+        Primitive::Rect { rect, color } => Some((rect, color)),
+      })
+  }
 }
 
 impl Default for DisplayList {
