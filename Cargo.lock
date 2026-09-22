@@ -5,3 +5,7 @@ version = 4
 [[package]]
 name = "gluon"
 version = "0.0.0"
+
+[[package]]
+name = "gluon-wgpu"
+version = "0.0.0"
