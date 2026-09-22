@@ -1,3 +1,10 @@
+struct RectUniform {
+    rect: vec4f,
+    color: vec4f,
+    viewport: vec2f,
+    padding: vec2f,
+}
+
 struct VertexOutput {
     @builtin(position)
     position: vec4f,
