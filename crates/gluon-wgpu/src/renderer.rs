@@ -1,9 +1,9 @@
 use gluon_core::DisplayList;
 use wgpu::{
   BlendState, ColorTargetState, ColorWrites, CommandEncoder, Device, FragmentState, LoadOp,
-  MultisampleState, Operations, PrimitiveState, RenderPassColorAttachment, RenderPassDescriptor,
-  RenderPipeline, RenderPipelineDescriptor, ShaderModuleDescriptor, ShaderSource, StoreOp,
-  TextureFormat, TextureView, VertexState,
+  MultisampleState, Operations, PrimitiveState, Queue, RenderPassColorAttachment,
+  RenderPassDescriptor, RenderPipeline, RenderPipelineDescriptor, ShaderModuleDescriptor,
+  ShaderSource, StoreOp, TextureFormat, TextureView, VertexState,
 };
 
 pub struct Renderer {
@@ -55,6 +55,7 @@ impl Renderer {
     _display_list: &DisplayList,
     _width: u32,
     _height: u32,
+    _queue: &Queue,
     encoder: &mut CommandEncoder,
     target: &TextureView,
   ) {
