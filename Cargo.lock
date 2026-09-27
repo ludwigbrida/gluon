@@ -232,6 +232,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "gluon-paint"
+version = "0.0.0"
+dependencies = [
+ "gluon-compose",
+ "gluon-core",
+ "gluon-layout",
+ "gluon-style",
+ "gluon-tree",
+]
+
+[[package]]
 name = "gluon-style"
 version = "0.0.0"
 dependencies = [
