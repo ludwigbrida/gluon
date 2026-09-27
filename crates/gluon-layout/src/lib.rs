@@ -1,3 +1,3 @@
-mod layout;
+mod computed_layout;
 
-pub use layout::Layout;
+pub use computed_layout::ComputedLayout;

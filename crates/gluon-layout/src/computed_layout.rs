@@ -3,11 +3,11 @@ use gluon_tree::NodeId;
 use std::collections::HashMap;
 
 #[derive(Default)]
-pub struct Layout {
+pub struct ComputedLayout {
   rects: HashMap<NodeId, Rect>,
 }
 
-impl Layout {
+impl ComputedLayout {
   pub fn rect(&self, node: NodeId) -> Option<&Rect> {
     self.rects.get(&node)
   }
