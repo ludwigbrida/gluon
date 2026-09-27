@@ -3,8 +3,8 @@ use crate::node_id::NodeId;
 #[derive(Debug)]
 pub struct Node<T> {
   pub value: T,
-  parent: Option<NodeId>,
-  children: Vec<NodeId>,
+  pub(crate) parent: Option<NodeId>,
+  pub(crate) children: Vec<NodeId>,
 }
 
 impl<T> Node<T> {

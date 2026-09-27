@@ -1,2 +1,2 @@
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct NodeId(usize);
+pub struct NodeId(pub(crate) usize);
