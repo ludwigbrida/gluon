@@ -1,0 +1,14 @@
+[package]
+name = "gluon"
+version = "0.0.0"
+publish = false
+edition.workspace = true
+
+[dependencies]
+gluon-compose = { path = "../gluon-compose" }
+gluon-core = { path = "../gluon-core" }
+gluon-layout = { path = "../gluon-layout" }
+gluon-paint = { path = "../gluon-paint" }
+gluon-style = { path = "../gluon-style" }
+gluon-tree = { path = "../gluon-tree" }
+gluon-wgpu = { path = "../gluon-wgpu" }
