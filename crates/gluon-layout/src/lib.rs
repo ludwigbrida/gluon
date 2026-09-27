@@ -4,4 +4,6 @@ mod layout;
 
 pub use compute::compute_layout;
 pub use computed_layout::ComputedLayout;
-pub use layout::{Direction, Layout, LayoutItem, LayoutMode, Length, Size};
+pub use layout::{
+  Alignment, Direction, Layout, LayoutItem, LayoutMode, Length, Size, StackAlignment,
+};

@@ -26,10 +26,27 @@ pub enum LayoutMode {
 }
 
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
+pub enum Alignment {
+  #[default]
+  Start,
+  Center,
+  End,
+}
+
+#[derive(Debug, Default, Clone, Copy, PartialEq)]
+pub struct StackAlignment {
+  pub horizontal: Alignment,
+  pub vertical: Alignment,
+}
+
+#[derive(Debug, Default, Clone, Copy, PartialEq)]
 pub struct Layout {
   pub mode: LayoutMode,
   pub size: Size,
   pub direction: Direction,
+  pub main_alignment: Alignment,
+  pub cross_alignment: Alignment,
+  pub stack_alignment: StackAlignment,
 }
 
 pub trait LayoutItem {

@@ -1,4 +1,4 @@
-use crate::{ComputedLayout, Direction, LayoutItem, LayoutMode, Length};
+use crate::{Alignment, ComputedLayout, Direction, LayoutItem, LayoutMode, Length};
 use gluon_core::Rect;
 use gluon_tree::{NodeId, Tree};
 
@@ -18,23 +18,73 @@ fn layout_children<T: LayoutItem>(
   computed: &mut ComputedLayout,
 ) {
   let parent_node = tree.node(parent).unwrap();
-  let direction = parent_node.value.layout().direction;
-  let mode = parent_node.value.layout().mode;
+  let parent_layout = parent_node.value.layout();
   let children = parent_node.children();
-  let mut flow_offset = 0.0;
+
+  let main_available = match parent_layout.direction {
+    Direction::Horizontal => parent_rect.w,
+    Direction::Vertical => parent_rect.h,
+  };
+
+  let total_main_size: f32 = children
+    .iter()
+    .map(|&child| {
+      let layout = tree.node(child).unwrap().value.layout();
+
+      match parent_layout.direction {
+        Direction::Horizontal => resolve_length(layout.size.width, parent_rect.w),
+        Direction::Vertical => resolve_length(layout.size.height, parent_rect.h),
+      }
+    })
+    .sum();
+
+  let mut flow_offset = match parent_layout.main_alignment {
+    Alignment::Start => 0.0,
+    Alignment::Center => (main_available - total_main_size) * 0.5,
+    Alignment::End => main_available - total_main_size,
+  };
 
   for &child in children {
-    let layout = tree.node(child).unwrap().value.layout();
+    let layout = *tree.node(child).unwrap().value.layout();
 
     let width = resolve_length(layout.size.width, parent_rect.w);
     let height = resolve_length(layout.size.height, parent_rect.h);
 
-    let (x, y) = match mode {
-      LayoutMode::Flow => match direction {
-        Direction::Horizontal => (parent_rect.x + flow_offset, parent_rect.y),
-        Direction::Vertical => (parent_rect.x, parent_rect.y + flow_offset),
+    let (x, y) = match parent_layout.mode {
+      LayoutMode::Flow => match parent_layout.direction {
+        Direction::Horizontal => (
+          parent_rect.x + flow_offset,
+          align(
+            parent_rect.y,
+            parent_rect.h,
+            height,
+            parent_layout.cross_alignment,
+          ),
+        ),
+        Direction::Vertical => (
+          align(
+            parent_rect.x,
+            parent_rect.w,
+            width,
+            parent_layout.cross_alignment,
+          ),
+          parent_rect.y + flow_offset,
+        ),
       },
-      LayoutMode::Stack => (parent_rect.x, parent_rect.y),
+      LayoutMode::Stack => (
+        align(
+          parent_rect.x,
+          parent_rect.w,
+          width,
+          layout.stack_alignment.horizontal,
+        ),
+        align(
+          parent_rect.y,
+          parent_rect.h,
+          height,
+          layout.stack_alignment.vertical,
+        ),
+      ),
     };
 
     let rect = Rect {
@@ -44,8 +94,8 @@ fn layout_children<T: LayoutItem>(
       h: height,
     };
 
-    if mode == LayoutMode::Flow {
-      flow_offset += match direction {
+    if parent_layout.mode == LayoutMode::Flow {
+      flow_offset += match parent_layout.direction {
         Direction::Horizontal => width,
         Direction::Vertical => height,
       };
@@ -60,5 +110,13 @@ fn resolve_length(length: Length, available: f32) -> f32 {
   match length {
     Length::Content => 0.0,
     Length::Fraction(fraction) => available * fraction.max(0.0),
+  }
+}
+
+fn align(start: f32, available: f32, size: f32, alignment: Alignment) -> f32 {
+  match alignment {
+    Alignment::Start => start,
+    Alignment::Center => start + (available - size) * 0.5,
+    Alignment::End => start + available - size,
   }
 }
