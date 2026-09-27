@@ -4,6 +4,7 @@ use gluon_core::Color;
 pub struct Style {
   pub background: Option<Color>,
   pub border: Border,
+  pub text: Option<TextStyle>,
 }
 
 #[derive(Default)]
@@ -17,4 +18,9 @@ pub struct Border {
 pub struct BorderSide {
   pub width: f32,
   pub color: Color,
+}
+
+pub struct TextStyle {
+  pub color: Color,
+  pub size: f32,
 }

@@ -1,3 +1,3 @@
 mod style;
 
-pub use style::{Border, BorderSide, Style};
+pub use style::{Border, BorderSide, Style, TextStyle};
