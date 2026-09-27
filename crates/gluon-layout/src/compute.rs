@@ -1,4 +1,6 @@
-use crate::{Alignment, ComputedLayout, Direction, LayoutItem, LayoutMode, Length, Padding};
+use crate::{
+  Alignment, ComputedLayout, Direction, LayoutItem, LayoutMode, Length, MainAlignment, Padding,
+};
 use gluon_core::Rect;
 use gluon_tree::{NodeId, Tree};
 
@@ -27,7 +29,7 @@ fn layout_children<T: LayoutItem>(
     Direction::Vertical => content_rect.h,
   };
 
-  let gap = main_available * parent_layout.gap.max(0.0);
+  let base_gap = main_available * parent_layout.gap.max(0.0);
 
   let total_main_size: f32 = children
     .iter()
@@ -40,12 +42,19 @@ fn layout_children<T: LayoutItem>(
       }
     })
     .sum::<f32>()
-    + gap * children.len().saturating_sub(1) as f32;
+    + base_gap * children.len().saturating_sub(1) as f32;
 
-  let mut flow_offset = match parent_layout.main_alignment {
-    Alignment::Start => 0.0,
-    Alignment::Center => (main_available - total_main_size) * 0.5,
-    Alignment::End => main_available - total_main_size,
+  let (mut flow_offset, gap) = match parent_layout.main_alignment {
+    MainAlignment::Start => (0.0, base_gap),
+    MainAlignment::Center => ((main_available - total_main_size) * 0.5, base_gap),
+    MainAlignment::End => (main_available - total_main_size, base_gap),
+    MainAlignment::SpaceBetween if children.len() > 1 => {
+      let free_space = (main_available - total_main_size).max(0.0);
+      let gap = base_gap + free_space / (children.len() - 1) as f32;
+
+      (0.0, gap)
+    }
+    MainAlignment::SpaceBetween => (0.0, base_gap),
   };
 
   for &child in children {

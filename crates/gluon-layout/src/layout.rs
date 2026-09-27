@@ -34,6 +34,15 @@ pub enum Alignment {
 }
 
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
+pub enum MainAlignment {
+  #[default]
+  Start,
+  Center,
+  End,
+  SpaceBetween,
+}
+
+#[derive(Debug, Default, Clone, Copy, PartialEq)]
 pub struct StackAlignment {
   pub horizontal: Alignment,
   pub vertical: Alignment,
@@ -52,7 +61,7 @@ pub struct Layout {
   pub mode: LayoutMode,
   pub size: Size,
   pub direction: Direction,
-  pub main_alignment: Alignment,
+  pub main_alignment: MainAlignment,
   pub cross_alignment: Alignment,
   pub stack_alignment: StackAlignment,
   pub padding: Padding,
