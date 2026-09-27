@@ -1,0 +1,8 @@
+[package]
+name = "gluon-text"
+version = "0.0.0"
+publish = false
+edition.workspace = true
+
+[dependencies]
+gluon-style = { path = "../gluon-style" }

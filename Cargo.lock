@@ -250,6 +250,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "gluon-text"
+version = "0.0.0"
+dependencies = [
+ "gluon-style",
+]
+
+[[package]]
 name = "gluon-tree"
 version = "0.0.0"
 
