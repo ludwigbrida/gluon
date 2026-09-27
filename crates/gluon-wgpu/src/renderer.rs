@@ -1,5 +1,5 @@
 use bytemuck::{Pod, Zeroable, bytes_of, cast_slice};
-use gluon_core::DisplayList;
+use gluon_core::{DisplayList, ScaleFactor};
 use wgpu::util::{BufferInitDescriptor, DeviceExt};
 use wgpu::{
   BindGroup, BindGroupDescriptor, BindGroupEntry, BlendState, Buffer, BufferUsages,
@@ -20,8 +20,9 @@ struct RectInstance {
 #[repr(C)]
 #[derive(Clone, Copy, Pod, Zeroable)]
 struct ViewportUniform {
-  size: [f32; 2],
-  padding: [f32; 2],
+  physical_size: [f32; 2],
+  scale_factor: f32,
+  padding: f32,
 }
 
 pub struct Renderer {
@@ -117,6 +118,7 @@ impl Renderer {
     display_list: &DisplayList,
     width: u32,
     height: u32,
+    scale_factor: ScaleFactor,
     queue: &Queue,
     encoder: &mut CommandEncoder,
     target: &TextureView,
@@ -129,7 +131,12 @@ impl Renderer {
       })
       .collect();
 
-    if instances.is_empty() || width == 0 || height == 0 {
+    if instances.is_empty()
+      || width == 0
+      || height == 0
+      || !scale_factor.0.is_finite()
+      || scale_factor.0 <= 0.0
+    {
       return;
     }
 
@@ -150,8 +157,9 @@ impl Renderer {
       &self.viewport_buffer,
       0,
       bytes_of(&ViewportUniform {
-        size: [width as f32, height as f32],
-        padding: [0.0, 0.0],
+        physical_size: [width as f32, height as f32],
+        scale_factor: scale_factor.0,
+        padding: 0.0,
       }),
     );
 

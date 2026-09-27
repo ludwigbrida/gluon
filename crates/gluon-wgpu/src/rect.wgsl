@@ -1,6 +1,7 @@
 struct Viewport {
-  size: vec2f,
-  padding: vec2f,
+  physical_size: vec2f,
+  scale_factor: f32,
+  padding: f32,
 }
 
 @group(0) @binding(0)
@@ -28,10 +29,13 @@ fn vertex_main(
 
   let pixel_position = rect.xy + positions[index] * rect.zw;
 
+  let logical_position = rect.xy + positions[index] * rect.zw;
+  let physical_position = logical_position * viewport.scale_factor;
+
   return VertexOutput(
     vec4f(
-      pixel_position.x / viewport.size.x * 2.0 - 1.0,
-      1.0 - pixel_position.y / viewport.size.y * 2.0,
+      physical_position.x / viewport.physical_size.x * 2.0 - 1.0,
+      1.0 - physical_position.y / viewport.physical_size.y * 2.0,
       0.0,
       1.0,
     ),
