@@ -3,6 +3,7 @@ use gluon_core::Color;
 #[derive(Default)]
 pub struct Style {
   pub background: Option<Color>,
+  pub border: Border,
 }
 
 #[derive(Default)]
