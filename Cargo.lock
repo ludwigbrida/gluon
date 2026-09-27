@@ -215,6 +215,10 @@ name = "gluon-core"
 version = "0.0.0"
 
 [[package]]
+name = "gluon-tree"
+version = "0.0.0"
+
+[[package]]
 name = "gluon-wgpu"
 version = "0.0.0"
 dependencies = [
