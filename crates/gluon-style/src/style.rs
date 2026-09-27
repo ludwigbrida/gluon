@@ -20,7 +20,16 @@ pub struct BorderSide {
   pub color: Color,
 }
 
+#[derive(Default)]
+pub enum TextAlignment {
+  #[default]
+  Start,
+  Center,
+  End,
+}
+
 pub struct TextStyle {
   pub color: Color,
   pub size: f32,
+  pub alignment: TextAlignment,
 }
