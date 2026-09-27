@@ -211,6 +211,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "gluon-compose"
+version = "0.0.0"
+dependencies = [
+ "gluon-layout",
+ "gluon-style",
+ "gluon-tree",
+]
+
+[[package]]
 name = "gluon-core"
 version = "0.0.0"
 
