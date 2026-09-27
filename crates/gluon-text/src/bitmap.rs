@@ -11,7 +11,7 @@ pub struct TextMetrics {
 }
 
 pub fn measure(text: &str, style: &TextStyle) -> TextMetrics {
-  let scale = style.size.max(0.0) / GLYPH_HEIGHT as f32;
+  let scale = style.size.0.max(0.0) / GLYPH_HEIGHT as f32;
   let count = text.chars().count();
 
   TextMetrics {

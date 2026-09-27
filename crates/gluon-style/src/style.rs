@@ -1,4 +1,5 @@
 use gluon_core::Color;
+use gluon_core::Pixels;
 
 #[derive(Default)]
 pub struct Style {
@@ -16,7 +17,7 @@ pub struct Border {
 }
 
 pub struct BorderSide {
-  pub width: f32,
+  pub width: Pixels,
   pub color: Color,
 }
 
@@ -30,6 +31,6 @@ pub enum TextAlignment {
 
 pub struct TextStyle {
   pub color: Color,
-  pub size: f32,
+  pub size: Pixels,
   pub alignment: TextAlignment,
 }

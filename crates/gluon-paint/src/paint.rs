@@ -42,7 +42,7 @@ fn paint_node(
 
 fn paint_borders(rect: &Rect, border: &Border, display_list: &mut DisplayList) {
   if let Some(side) = &border.top {
-    let height = side.width.max(0.0).min(rect.h);
+    let height = side.width.0.max(0.0).min(rect.h);
 
     display_list.rect(
       Rect {
@@ -56,7 +56,7 @@ fn paint_borders(rect: &Rect, border: &Border, display_list: &mut DisplayList) {
   }
 
   if let Some(side) = &border.right {
-    let width = side.width.max(0.0).min(rect.w);
+    let width = side.width.0.max(0.0).min(rect.w);
 
     display_list.rect(
       Rect {
@@ -70,7 +70,7 @@ fn paint_borders(rect: &Rect, border: &Border, display_list: &mut DisplayList) {
   }
 
   if let Some(side) = &border.bottom {
-    let height = side.width.max(0.0).min(rect.h);
+    let height = side.width.0.max(0.0).min(rect.h);
 
     display_list.rect(
       Rect {
@@ -84,7 +84,7 @@ fn paint_borders(rect: &Rect, border: &Border, display_list: &mut DisplayList) {
   }
 
   if let Some(side) = &border.left {
-    let width = side.width.max(0.0).min(rect.w);
+    let width = side.width.0.max(0.0).min(rect.w);
 
     display_list.rect(
       Rect {
