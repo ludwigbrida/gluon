@@ -1,4 +1,5 @@
-use gluon_compose::Composition;
+use crate::text::paint_text;
+use gluon_compose::{Composition, Content};
 use gluon_core::{DisplayList, Rect};
 use gluon_layout::ComputedLayout;
 use gluon_style::Border;
@@ -29,6 +30,10 @@ fn paint_node(
   }
 
   paint_borders(rect, &element.style.border, display_list);
+
+  if let (Content::Text(text), Some(style)) = (&element.content, &element.style.text) {
+    paint_text(display_list, rect, text, style);
+  }
 
   for &child in composition.node(node).unwrap().children() {
     paint_node(composition, child, layout, display_list);
