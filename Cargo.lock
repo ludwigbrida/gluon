@@ -216,6 +216,7 @@ version = "0.0.0"
 dependencies = [
  "gluon-layout",
  "gluon-style",
+ "gluon-text",
  "gluon-tree",
 ]
 
@@ -239,6 +240,7 @@ dependencies = [
  "gluon-core",
  "gluon-layout",
  "gluon-style",
+ "gluon-text",
  "gluon-tree",
 ]
 
