@@ -1,4 +1,4 @@
-use crate::{Alignment, ComputedLayout, Direction, LayoutItem, LayoutMode, Length};
+use crate::{Alignment, ComputedLayout, Direction, LayoutItem, LayoutMode, Length, Padding};
 use gluon_core::Rect;
 use gluon_tree::{NodeId, Tree};
 
@@ -20,11 +20,14 @@ fn layout_children<T: LayoutItem>(
   let parent_node = tree.node(parent).unwrap();
   let parent_layout = parent_node.value.layout();
   let children = parent_node.children();
+  let content_rect = content_rect(parent_rect, parent_layout.padding);
 
   let main_available = match parent_layout.direction {
-    Direction::Horizontal => parent_rect.w,
-    Direction::Vertical => parent_rect.h,
+    Direction::Horizontal => content_rect.w,
+    Direction::Vertical => content_rect.h,
   };
+
+  let gap = main_available * parent_layout.gap.max(0.0);
 
   let total_main_size: f32 = children
     .iter()
@@ -32,11 +35,12 @@ fn layout_children<T: LayoutItem>(
       let layout = tree.node(child).unwrap().value.layout();
 
       match parent_layout.direction {
-        Direction::Horizontal => resolve_length(layout.size.width, parent_rect.w),
-        Direction::Vertical => resolve_length(layout.size.height, parent_rect.h),
+        Direction::Horizontal => resolve_length(layout.size.width, content_rect.w),
+        Direction::Vertical => resolve_length(layout.size.height, content_rect.h),
       }
     })
-    .sum();
+    .sum::<f32>()
+    + gap * children.len().saturating_sub(1) as f32;
 
   let mut flow_offset = match parent_layout.main_alignment {
     Alignment::Start => 0.0,
@@ -47,40 +51,40 @@ fn layout_children<T: LayoutItem>(
   for &child in children {
     let layout = *tree.node(child).unwrap().value.layout();
 
-    let width = resolve_length(layout.size.width, parent_rect.w);
-    let height = resolve_length(layout.size.height, parent_rect.h);
+    let width = resolve_length(layout.size.width, content_rect.w);
+    let height = resolve_length(layout.size.height, content_rect.h);
 
     let (x, y) = match parent_layout.mode {
       LayoutMode::Flow => match parent_layout.direction {
         Direction::Horizontal => (
-          parent_rect.x + flow_offset,
+          content_rect.x + flow_offset,
           align(
-            parent_rect.y,
-            parent_rect.h,
+            content_rect.y,
+            content_rect.h,
             height,
             parent_layout.cross_alignment,
           ),
         ),
         Direction::Vertical => (
           align(
-            parent_rect.x,
-            parent_rect.w,
+            content_rect.x,
+            content_rect.w,
             width,
             parent_layout.cross_alignment,
           ),
-          parent_rect.y + flow_offset,
+          content_rect.y + flow_offset,
         ),
       },
       LayoutMode::Stack => (
         align(
-          parent_rect.x,
-          parent_rect.w,
+          content_rect.x,
+          content_rect.w,
           width,
           layout.stack_alignment.horizontal,
         ),
         align(
-          parent_rect.y,
-          parent_rect.h,
+          content_rect.y,
+          content_rect.h,
           height,
           layout.stack_alignment.vertical,
         ),
@@ -96,13 +100,27 @@ fn layout_children<T: LayoutItem>(
 
     if parent_layout.mode == LayoutMode::Flow {
       flow_offset += match parent_layout.direction {
-        Direction::Horizontal => width,
-        Direction::Vertical => height,
+        Direction::Horizontal => width + gap,
+        Direction::Vertical => height + gap,
       };
     }
 
     layout_children(tree, child, &rect, computed);
     computed.insert(child, rect);
+  }
+}
+
+fn content_rect(rect: &Rect, padding: Padding) -> Rect {
+  let left = rect.w * padding.left.max(0.0);
+  let right = rect.w * padding.right.max(0.0);
+  let top = rect.h * padding.top.max(0.0);
+  let bottom = rect.h * padding.bottom.max(0.0);
+
+  Rect {
+    x: rect.x + left,
+    y: rect.y + top,
+    w: (rect.w - left - right).max(0.0),
+    h: (rect.h - top - bottom).max(0.0),
   }
 }
 

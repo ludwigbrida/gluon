@@ -40,6 +40,14 @@ pub struct StackAlignment {
 }
 
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
+pub struct Padding {
+  pub top: f32,
+  pub right: f32,
+  pub bottom: f32,
+  pub left: f32,
+}
+
+#[derive(Debug, Default, Clone, Copy, PartialEq)]
 pub struct Layout {
   pub mode: LayoutMode,
   pub size: Size,
@@ -47,6 +55,8 @@ pub struct Layout {
   pub main_alignment: Alignment,
   pub cross_alignment: Alignment,
   pub stack_alignment: StackAlignment,
+  pub padding: Padding,
+  pub gap: f32,
 }
 
 pub trait LayoutItem {
