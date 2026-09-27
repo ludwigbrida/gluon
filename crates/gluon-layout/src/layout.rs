@@ -37,3 +37,13 @@ pub struct Layout {
   pub position: Position,
   pub direction: Direction,
 }
+
+pub trait LayoutItem {
+  fn layout(&self) -> &Layout;
+}
+
+impl LayoutItem for Layout {
+  fn layout(&self) -> &Layout {
+    self
+  }
+}

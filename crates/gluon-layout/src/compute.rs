@@ -1,9 +1,9 @@
 use crate::layout::Layout;
-use crate::{ComputedLayout, Direction, Length, Position};
+use crate::{ComputedLayout, Direction, LayoutItem, Length, Position};
 use gluon_core::Rect;
 use gluon_tree::{NodeId, Tree};
 
-pub fn compute_layout(tree: &Tree<Layout>, viewport: Rect) -> ComputedLayout {
+pub fn compute_layout<T: LayoutItem>(tree: &Tree<T>, viewport: Rect) -> ComputedLayout {
   let mut computed = ComputedLayout::default();
 
   layout_children(tree, tree.root(), &viewport, &mut computed);
@@ -12,19 +12,19 @@ pub fn compute_layout(tree: &Tree<Layout>, viewport: Rect) -> ComputedLayout {
   computed
 }
 
-fn layout_children(
-  tree: &Tree<Layout>,
+fn layout_children<T: LayoutItem>(
+  tree: &Tree<T>,
   parent: NodeId,
   parent_rect: &Rect,
   computed: &mut ComputedLayout,
 ) {
   let parent_node = tree.node(parent).unwrap();
-  let direction = parent_node.value.direction;
+  let direction = parent_node.value.layout().direction;
   let children = parent_node.children();
   let mut flow_offset = 0.0;
 
   for &child in children {
-    let layout = tree.node(child).unwrap().value;
+    let layout = *tree.node(child).unwrap().value.layout();
 
     let rect = match layout.position {
       Position::Flow => {
