@@ -25,7 +25,15 @@ pub enum Position {
 }
 
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
+pub enum Direction {
+  #[default]
+  Horizontal,
+  Vertical,
+}
+
+#[derive(Debug, Default, Clone, Copy, PartialEq)]
 pub struct Layout {
   pub size: Size,
   pub position: Position,
+  pub direction: Direction,
 }
