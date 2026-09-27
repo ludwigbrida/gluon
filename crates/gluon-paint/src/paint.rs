@@ -28,6 +28,8 @@ fn paint_node(
     display_list.rect(*rect, *background);
   }
 
+  paint_borders(rect, &element.style.border, display_list);
+
   for &child in composition.node(node).unwrap().children() {
     paint_node(composition, child, layout, display_list);
   }
