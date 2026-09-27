@@ -2,26 +2,13 @@
 pub enum Length {
   #[default]
   Content,
-  Pixels(f32),
-  Fill,
+  Fraction(f32),
 }
 
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
 pub struct Size {
   pub width: Length,
   pub height: Length,
-}
-
-#[derive(Debug, Default, Clone, Copy, PartialEq)]
-pub enum Position {
-  #[default]
-  Flow,
-  Absolute {
-    top: Option<f32>,
-    right: Option<f32>,
-    bottom: Option<f32>,
-    left: Option<f32>,
-  },
 }
 
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
@@ -32,9 +19,16 @@ pub enum Direction {
 }
 
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
+pub enum LayoutMode {
+  #[default]
+  Flow,
+  Stack,
+}
+
+#[derive(Debug, Default, Clone, Copy, PartialEq)]
 pub struct Layout {
+  pub mode: LayoutMode,
   pub size: Size,
-  pub position: Position,
   pub direction: Direction,
 }
 
