@@ -1,5 +1,6 @@
 use crate::{
-  Alignment, ComputedLayout, Direction, LayoutItem, LayoutMode, Length, MainAlignment, Padding,
+  Alignment, ComputedLayout, Constraints, Direction, LayoutItem, LayoutMode, Length, MainAlignment,
+  Padding,
 };
 use gluon_core::Rect;
 use gluon_tree::{NodeId, Tree};
@@ -34,11 +35,20 @@ fn layout_children<T: LayoutItem>(
   let total_main_size: f32 = children
     .iter()
     .map(|&child| {
-      let layout = tree.node(child).unwrap().value.layout();
+      let child = tree.node(child).unwrap();
+      let layout = child.value.layout();
+      let content_size = child.value.measure_content(Constraints {
+        max_width: content_rect.w,
+        max_height: content_rect.h,
+      });
 
       match parent_layout.direction {
-        Direction::Horizontal => resolve_length(layout.size.width, content_rect.w),
-        Direction::Vertical => resolve_length(layout.size.height, content_rect.h),
+        Direction::Horizontal => {
+          resolve_length(layout.size.width, content_rect.w, content_size.width)
+        }
+        Direction::Vertical => {
+          resolve_length(layout.size.height, content_rect.h, content_size.height)
+        }
       }
     })
     .sum::<f32>()
@@ -58,10 +68,15 @@ fn layout_children<T: LayoutItem>(
   };
 
   for &child in children {
-    let layout = *tree.node(child).unwrap().value.layout();
+    let child_node = tree.node(child).unwrap();
+    let layout = *child_node.value.layout();
+    let content_size = child_node.value.measure_content(Constraints {
+      max_width: content_rect.w,
+      max_height: content_rect.h,
+    });
 
-    let width = resolve_length(layout.size.width, content_rect.w);
-    let height = resolve_length(layout.size.height, content_rect.h);
+    let width = resolve_length(layout.size.width, content_rect.w, content_size.width);
+    let height = resolve_length(layout.size.height, content_rect.h, content_size.height);
 
     let (x, y) = match parent_layout.mode {
       LayoutMode::Flow => match parent_layout.direction {
@@ -133,9 +148,9 @@ fn content_rect(rect: &Rect, padding: Padding) -> Rect {
   }
 }
 
-fn resolve_length(length: Length, available: f32) -> f32 {
+fn resolve_length(length: Length, available: f32, content: f32) -> f32 {
   match length {
-    Length::Content => 0.0,
+    Length::Content => content.max(0.0),
     Length::Fraction(fraction) => available * fraction.max(0.0),
   }
 }

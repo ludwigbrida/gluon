@@ -12,6 +12,18 @@ pub struct Size {
 }
 
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
+pub struct Constraints {
+  pub max_width: f32,
+  pub max_height: f32,
+}
+
+#[derive(Debug, Default, Clone, Copy, PartialEq)]
+pub struct ContentSize {
+  pub width: f32,
+  pub height: f32,
+}
+
+#[derive(Debug, Default, Clone, Copy, PartialEq)]
 pub enum Direction {
   #[default]
   Horizontal,
@@ -70,6 +82,10 @@ pub struct Layout {
 
 pub trait LayoutItem {
   fn layout(&self) -> &Layout;
+
+  fn measure_content(&self, _constraints: Constraints) -> ContentSize {
+    ContentSize::default()
+  }
 }
 
 impl LayoutItem for Layout {
