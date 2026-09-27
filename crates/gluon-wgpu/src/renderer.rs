@@ -1,5 +1,5 @@
 use bytemuck::{Pod, Zeroable, bytes_of, cast_slice};
-use gluon_core::{DisplayList, ScaleFactor};
+use gluon_core::{DisplayList, Viewport};
 use wgpu::util::{BufferInitDescriptor, DeviceExt};
 use wgpu::{
   BindGroup, BindGroupDescriptor, BindGroupEntry, BlendState, Buffer, BufferUsages,
@@ -116,9 +116,7 @@ impl Renderer {
   pub fn render(
     &mut self,
     display_list: &DisplayList,
-    width: u32,
-    height: u32,
-    scale_factor: ScaleFactor,
+    viewport: Viewport,
     queue: &Queue,
     encoder: &mut CommandEncoder,
     target: &TextureView,
@@ -132,10 +130,10 @@ impl Renderer {
       .collect();
 
     if instances.is_empty()
-      || width == 0
-      || height == 0
-      || !scale_factor.0.is_finite()
-      || scale_factor.0 <= 0.0
+      || viewport.physical_width == 0
+      || viewport.physical_height == 0
+      || !viewport.scale_factor.0.is_finite()
+      || viewport.scale_factor.0 <= 0.0
     {
       return;
     }
@@ -157,8 +155,11 @@ impl Renderer {
       &self.viewport_buffer,
       0,
       bytes_of(&ViewportUniform {
-        physical_size: [width as f32, height as f32],
-        scale_factor: scale_factor.0,
+        physical_size: [
+          viewport.physical_width as f32,
+          viewport.physical_height as f32,
+        ],
+        scale_factor: viewport.scale_factor.0,
         padding: 0.0,
       }),
     );
