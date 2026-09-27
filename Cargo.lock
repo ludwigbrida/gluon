@@ -217,6 +217,10 @@ version = "0.0.0"
 [[package]]
 name = "gluon-layout"
 version = "0.0.0"
+dependencies = [
+ "gluon-core",
+ "gluon-tree",
+]
 
 [[package]]
 name = "gluon-tree"

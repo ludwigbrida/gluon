@@ -3,3 +3,7 @@ name = "gluon-layout"
 version = "0.0.0"
 publish = false
 edition.workspace = true
+
+[dependencies]
+gluon-core = { path = "../gluon-core" }
+gluon-tree = { path = "../gluon-tree" }
