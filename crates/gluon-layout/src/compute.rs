@@ -171,7 +171,7 @@ where
   let children = node.children();
 
   if children.is_empty() {
-    return own_size;
+    return expand_for_padding(own_size, layout.padding);
   }
 
   let mut child_width: f32 = 0.0;
@@ -211,10 +211,13 @@ where
     }
   }
 
-  ContentSize {
-    width: own_size.width.max(child_width),
-    height: own_size.height.max(child_height),
-  }
+  expand_for_padding(
+    ContentSize {
+      width: own_size.width.max(child_width),
+      height: own_size.height.max(child_height),
+    },
+    layout.padding,
+  )
 }
 
 fn content_rect(rect: &Rect, padding: Padding) -> Rect {
@@ -243,5 +246,23 @@ fn align(start: f32, available: f32, size: f32, alignment: Alignment) -> f32 {
     Alignment::Start => start,
     Alignment::Center => start + (available - size) * 0.5,
     Alignment::End => start + available - size,
+  }
+}
+
+fn expand_for_padding(size: ContentSize, padding: Padding) -> ContentSize {
+  let horizontal = 1.0 - padding.left.max(0.0) - padding.right.max(0.0);
+  let vertical = 1.0 - padding.top.max(0.0) - padding.bottom.max(0.0);
+
+  ContentSize {
+    width: if horizontal > 0.0 {
+      size.width / horizontal
+    } else {
+      0.0
+    },
+    height: if vertical > 0.0 {
+      size.height / vertical
+    } else {
+      0.0
+    },
   }
 }
