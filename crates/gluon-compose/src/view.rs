@@ -27,6 +27,18 @@ impl<const N: usize> From<[View; N]> for Children {
   }
 }
 
+impl From<String> for Children {
+  fn from(value: String) -> Self {
+    Self::Text(value)
+  }
+}
+
+impl From<&str> for Children {
+  fn from(value: &str) -> Self {
+    Self::Text(value.into())
+  }
+}
+
 impl View {
   pub fn into_composition(self) -> Composition {
     let View {
