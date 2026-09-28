@@ -1,3 +1,4 @@
+use crate::glyph_atlas::GlyphAtlas;
 use bytemuck::{Pod, Zeroable, bytes_of, cast_slice};
 use gluon_core::Viewport;
 use gluon_paint::PaintList;
@@ -7,15 +8,24 @@ use wgpu::{
   BindingType, BlendState, Buffer, BufferBindingType, BufferUsages, ColorTargetState, ColorWrites,
   CommandEncoder, Device, FragmentState, LoadOp, MultisampleState, Operations,
   PipelineLayoutDescriptor, PrimitiveState, Queue, RenderPassColorAttachment, RenderPassDescriptor,
-  RenderPipeline, RenderPipelineDescriptor, ShaderModuleDescriptor, ShaderSource, ShaderStages,
-  StoreOp, TextureFormat, TextureView, VertexAttribute, VertexBufferLayout, VertexFormat,
-  VertexState, VertexStepMode,
+  RenderPipeline, RenderPipelineDescriptor, SamplerBindingType, ShaderModuleDescriptor,
+  ShaderSource, ShaderStages, StoreOp, TextureFormat, TextureSampleType, TextureView,
+  TextureViewDimension, VertexAttribute, VertexBufferLayout, VertexFormat, VertexState,
+  VertexStepMode,
 };
 
 #[repr(C)]
 #[derive(Clone, Copy, Pod, Zeroable)]
 struct RectInstance {
   rect: [f32; 4],
+  color: [f32; 4],
+}
+
+#[repr(C)]
+#[derive(Clone, Copy, Pod, Zeroable)]
+struct GlyphInstance {
+  rect: [f32; 4],
+  uv: [f32; 4],
   color: [f32; 4],
 }
 
@@ -34,6 +44,11 @@ pub struct Renderer {
   rect_capacity: usize,
   viewport_buffer: Buffer,
   viewport_bind_group: BindGroup,
+  glyph_pipeline: RenderPipeline,
+  glyph_buffer: Buffer,
+  glyph_capacity: usize,
+  glyph_atlas: GlyphAtlas,
+  glyph_atlas_bind_group: BindGroup,
 }
 
 impl Renderer {
@@ -50,6 +65,106 @@ impl Renderer {
         },
         count: None,
       }],
+    });
+
+    let glyph_atlas_bind_group_layout =
+      device.create_bind_group_layout(&BindGroupLayoutDescriptor {
+        label: Some("gluon_glyph_atlas_bind_group_layout"),
+        entries: &[
+          BindGroupLayoutEntry {
+            binding: 0,
+            visibility: ShaderStages::FRAGMENT,
+            ty: BindingType::Texture {
+              sample_type: TextureSampleType::Float { filterable: true },
+              view_dimension: TextureViewDimension::D2,
+              multisampled: false,
+            },
+            count: None,
+          },
+          BindGroupLayoutEntry {
+            binding: 1,
+            visibility: ShaderStages::FRAGMENT,
+            ty: BindingType::Sampler(SamplerBindingType::Filtering),
+            count: None,
+          },
+        ],
+      });
+
+    let glyph_atlas = GlyphAtlas::new(device);
+
+    let glyph_atlas_bind_group = device.create_bind_group(&BindGroupDescriptor {
+      label: Some("gluon_glyph_atlas_bind_group"),
+      layout: &glyph_atlas_bind_group_layout,
+      entries: &[
+        BindGroupEntry {
+          binding: 0,
+          resource: wgpu::BindingResource::TextureView(glyph_atlas.view()),
+        },
+        BindGroupEntry {
+          binding: 1,
+          resource: wgpu::BindingResource::Sampler(glyph_atlas.sampler()),
+        },
+      ],
+    });
+
+    let glyph_shader = device.create_shader_module(ShaderModuleDescriptor {
+      label: Some("gluon_glyph_shader"),
+      source: ShaderSource::Wgsl(include_str!("glyph.wgsl").into()),
+    });
+
+    let glyph_pipeline_layout = device.create_pipeline_layout(&PipelineLayoutDescriptor {
+      label: Some("gluon_glyph_pipeline_layout"),
+      bind_group_layouts: &[
+        Some(&viewport_bind_group_layout),
+        Some(&glyph_atlas_bind_group_layout),
+      ],
+      immediate_size: 0,
+    });
+
+    let glyph_pipeline = device.create_render_pipeline(&RenderPipelineDescriptor {
+      label: Some("gluon_glyph_pipeline"),
+      layout: Some(&glyph_pipeline_layout),
+      vertex: VertexState {
+        module: &glyph_shader,
+        entry_point: Some("vertex_main"),
+        compilation_options: Default::default(),
+        buffers: &[Some(VertexBufferLayout {
+          array_stride: size_of::<GlyphInstance>() as u64,
+          step_mode: VertexStepMode::Instance,
+          attributes: &[
+            VertexAttribute {
+              format: VertexFormat::Float32x4,
+              offset: 0,
+              shader_location: 0,
+            },
+            VertexAttribute {
+              format: VertexFormat::Float32x4,
+              offset: 16,
+              shader_location: 1,
+            },
+            VertexAttribute {
+              format: VertexFormat::Float32x4,
+              offset: 32,
+              shader_location: 2,
+            },
+          ],
+        })],
+      },
+      primitive: PrimitiveState::default(),
+      depth_stencil: None,
+      multisample: MultisampleState::default(),
+      fragment: Some(FragmentState {
+        module: &glyph_shader,
+        entry_point: Some("fragment_main"),
+        compilation_options: Default::default(),
+        targets: &[Some(ColorTargetState {
+          format: target_format,
+          blend: Some(BlendState::ALPHA_BLENDING),
+          write_mask: ColorWrites::ALL,
+        })],
+      }),
+      multiview_mask: None,
+      cache: None,
     });
 
     let shader_module = device.create_shader_module(ShaderModuleDescriptor {
@@ -110,6 +225,12 @@ impl Renderer {
       usage: BufferUsages::VERTEX | BufferUsages::COPY_DST,
     });
 
+    let glyph_buffer = device.create_buffer_init(&BufferInitDescriptor {
+      label: Some("gluon_glyph_buffer"),
+      contents: bytes_of(&GlyphInstance::zeroed()),
+      usage: BufferUsages::VERTEX | BufferUsages::COPY_DST,
+    });
+
     let viewport_buffer = device.create_buffer_init(&BufferInitDescriptor {
       label: Some("gluon_viewport_buffer"),
       contents: bytes_of(&ViewportUniform::zeroed()),
@@ -132,6 +253,11 @@ impl Renderer {
       rect_capacity: 1,
       viewport_buffer,
       viewport_bind_group,
+      glyph_pipeline,
+      glyph_buffer,
+      glyph_capacity: 1,
+      glyph_atlas,
+      glyph_atlas_bind_group,
     }
   }
 
