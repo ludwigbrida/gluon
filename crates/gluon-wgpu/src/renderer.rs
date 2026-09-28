@@ -1,7 +1,8 @@
 use crate::glyph_atlas::GlyphAtlas;
 use bytemuck::{Pod, Zeroable, bytes_of, cast_slice};
 use gluon_core::Viewport;
-use gluon_paint::PaintList;
+use gluon_font::FontStore;
+use gluon_paint::{PaintCommand, PaintList, TextRun};
 use wgpu::util::{BufferInitDescriptor, DeviceExt};
 use wgpu::{
   BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor, BindGroupLayoutEntry,
@@ -27,6 +28,11 @@ struct GlyphInstance {
   rect: [f32; 4],
   uv: [f32; 4],
   color: [f32; 4],
+}
+
+enum DrawCommand {
+  Rect(usize),
+  Glyphs { start: usize, count: usize },
 }
 
 #[repr(C)]
@@ -265,19 +271,38 @@ impl Renderer {
     &mut self,
     paint_list: &PaintList,
     viewport: Viewport,
+    fonts: &FontStore,
     queue: &Queue,
     encoder: &mut CommandEncoder,
     target: &TextureView,
   ) {
-    let instances: Vec<_> = paint_list
-      .rects()
-      .map(|(rect, color)| RectInstance {
-        rect: [rect.x, rect.y, rect.w, rect.h],
-        color: [color.r, color.g, color.b, color.a],
-      })
-      .collect();
+    let mut rect_instances = Vec::new();
+    let mut glyph_instances = Vec::new();
+    let mut commands = Vec::new();
 
-    if instances.is_empty()
+    for command in paint_list.commands() {
+      match command {
+        PaintCommand::Rect { rect, color } => {
+          rect_instances.push(RectInstance {
+            rect: [rect.x, rect.y, rect.w, rect.h],
+            color: [color.r, color.g, color.b, color.a],
+          });
+
+          commands.push(DrawCommand::Rect(rect_instances.len() - 1));
+        }
+        PaintCommand::Text(text) => {
+          if let Some((start, count)) =
+            self.append_text_run(text, fonts, queue, &mut glyph_instances)
+          {
+            if count != 0 {
+              commands.push(DrawCommand::Glyphs { start, count });
+            }
+          }
+        }
+      }
+    }
+
+    if commands.is_empty()
       || viewport.physical_width == 0
       || viewport.physical_height == 0
       || !viewport.scale_factor.0.is_finite()
@@ -286,8 +311,8 @@ impl Renderer {
       return;
     }
 
-    if instances.len() > self.rect_capacity {
-      self.rect_capacity = instances.len().next_power_of_two();
+    if rect_instances.len() > self.rect_capacity {
+      self.rect_capacity = rect_instances.len().next_power_of_two();
 
       self.rect_buffer = self.device.create_buffer(&wgpu::BufferDescriptor {
         label: Some("gluon_rect_buffer"),
@@ -297,7 +322,24 @@ impl Renderer {
       });
     }
 
-    queue.write_buffer(&self.rect_buffer, 0, cast_slice(&instances));
+    if !rect_instances.is_empty() {
+      queue.write_buffer(&self.rect_buffer, 0, cast_slice(&rect_instances));
+    }
+
+    if glyph_instances.len() > self.glyph_capacity {
+      self.glyph_capacity = glyph_instances.len().next_power_of_two();
+
+      self.glyph_buffer = self.device.create_buffer(&wgpu::BufferDescriptor {
+        label: Some("gluon_glyph_buffer"),
+        size: (self.glyph_capacity * size_of::<GlyphInstance>()) as u64,
+        usage: BufferUsages::VERTEX | BufferUsages::COPY_DST,
+        mapped_at_creation: false,
+      });
+    }
+
+    if !glyph_instances.is_empty() {
+      queue.write_buffer(&self.glyph_buffer, 0, cast_slice(&glyph_instances));
+    }
 
     queue.write_buffer(
       &self.viewport_buffer,
@@ -329,9 +371,86 @@ impl Renderer {
       multiview_mask: None,
     });
 
-    render_pass.set_pipeline(&self.pipeline);
-    render_pass.set_bind_group(0, &self.viewport_bind_group, &[]);
-    render_pass.set_vertex_buffer(0, self.rect_buffer.slice(..));
-    render_pass.draw(0..6, 0..instances.len() as u32);
+    for command in commands {
+      match command {
+        DrawCommand::Rect(index) => {
+          let offset = index as u64 * size_of::<RectInstance>() as u64;
+
+          render_pass.set_pipeline(&self.pipeline);
+          render_pass.set_bind_group(0, &self.viewport_bind_group, &[]);
+          render_pass.set_vertex_buffer(
+            0,
+            self
+              .rect_buffer
+              .slice(offset..offset + size_of::<RectInstance>() as u64),
+          );
+          render_pass.draw(0..6, 0..1);
+        }
+        DrawCommand::Glyphs { start, count } => {
+          let offset = start as u64 * size_of::<GlyphInstance>() as u64;
+          let end = offset + count as u64 * size_of::<GlyphInstance>() as u64;
+
+          render_pass.set_pipeline(&self.glyph_pipeline);
+          render_pass.set_bind_group(0, &self.viewport_bind_group, &[]);
+          render_pass.set_bind_group(1, &self.glyph_atlas_bind_group, &[]);
+          render_pass.set_vertex_buffer(0, self.glyph_buffer.slice(offset..end));
+          render_pass.draw(0..6, 0..count as u32);
+        }
+      }
+    }
+  }
+
+  fn append_text_run(
+    &mut self,
+    text: &TextRun,
+    fonts: &FontStore,
+    queue: &Queue,
+    instances: &mut Vec<GlyphInstance>,
+  ) -> Option<(usize, usize)> {
+    let line = fonts.line_metrics(text.font, text.size)?;
+
+    let mut glyphs = Vec::with_capacity(text.text.chars().count());
+    let mut width = 0.0;
+
+    for character in text.text.chars() {
+      let glyph = self
+        .glyph_atlas
+        .glyph(fonts, text.font, character, text.size, queue)?;
+
+      width += glyph.advance;
+      glyphs.push(glyph);
+    }
+
+    let start = instances.len();
+    let mut pen_x = text.start_x(width);
+
+    let baseline_y =
+      text.bounds.y + ((text.bounds.h - line.height.0) * 0.5).max(0.0) + line.ascent.0;
+
+    let atlas_size = 1024.0;
+
+    for glyph in glyphs {
+      if glyph.width != 0 && glyph.height != 0 {
+        instances.push(GlyphInstance {
+          rect: [
+            pen_x + glyph.left,
+            baseline_y - glyph.bottom - glyph.height as f32,
+            glyph.width as f32,
+            glyph.height as f32,
+          ],
+          uv: [
+            glyph.x as f32 / atlas_size,
+            glyph.y as f32 / atlas_size,
+            glyph.width as f32 / atlas_size,
+            glyph.height as f32 / atlas_size,
+          ],
+          color: [text.color.r, text.color.g, text.color.b, text.color.a],
+        });
+      }
+
+      pen_x += glyph.advance;
+    }
+
+    Some((start, instances.len() - start))
   }
 }

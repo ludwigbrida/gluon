@@ -21,6 +21,16 @@ pub struct PaintList {
   commands: Vec<PaintCommand>,
 }
 
+impl TextRun {
+  pub fn start_x(&self, width: f32) -> f32 {
+    match self.alignment {
+      TextAlignment::Start => self.bounds.x,
+      TextAlignment::Center => self.bounds.x + (self.bounds.w - width) * 0.5,
+      TextAlignment::End => self.bounds.x + self.bounds.w - width,
+    }
+  }
+}
+
 impl PaintList {
   pub fn rect(&mut self, rect: Rect, color: Color) {
     self.commands.push(PaintCommand::Rect { rect, color });
