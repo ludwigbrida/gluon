@@ -1,7 +1,7 @@
 use crate::layout::ContentMeasurer;
 use crate::{
-  Alignment, ComputedLayout, Constraints, Direction, LayoutItem, LayoutMode, Length, MainAlignment,
-  Padding,
+  Alignment, ComputedLayout, Constraints, ContentSize, Direction, LayoutItem, LayoutMode, Length,
+  MainAlignment, Padding,
 };
 use gluon_core::Rect;
 use gluon_tree::{NodeId, Tree};
@@ -43,15 +43,18 @@ fn layout_children<T, M>(
 
   let total_main_size: f32 = children
     .iter()
-    .map(|&child| {
-      let child = tree.node(child).unwrap();
+    .map(|&child_id| {
+      let child = tree.node(child_id).unwrap();
       let layout = child.value.layout();
-      let content_size = measurer.measure(
-        &child.value,
+
+      let content_size = measure_intrinsic(
+        tree,
+        child_id,
         Constraints {
           max_width: content_rect.w,
           max_height: content_rect.h,
         },
+        measurer,
       );
 
       match parent_layout.direction {
@@ -82,12 +85,14 @@ fn layout_children<T, M>(
   for &child in children {
     let child_node = tree.node(child).unwrap();
     let layout = *child_node.value.layout();
-    let content_size = measurer.measure(
-      &child_node.value,
+    let content_size = measure_intrinsic(
+      tree,
+      child,
       Constraints {
         max_width: content_rect.w,
         max_height: content_rect.h,
       },
+      measurer,
     );
 
     let width = resolve_length(layout.size.width, content_rect.w, content_size.width);
@@ -146,6 +151,69 @@ fn layout_children<T, M>(
 
     layout_children(tree, child, &rect, measurer, computed);
     computed.insert(child, rect);
+  }
+}
+
+fn measure_intrinsic<T, M>(
+  tree: &Tree<T>,
+  node: NodeId,
+  constraints: Constraints,
+  measurer: &M,
+) -> ContentSize
+where
+  T: LayoutItem,
+  M: ContentMeasurer<T>,
+{
+  let node = tree.node(node).unwrap();
+  let layout = *node.value.layout();
+
+  let own_size = measurer.measure(&node.value, constraints);
+  let children = node.children();
+
+  if children.is_empty() {
+    return own_size;
+  }
+
+  let mut child_width: f32 = 0.0;
+  let mut child_height: f32 = 0.0;
+
+  for &child in children {
+    let intrinsic = measure_intrinsic(tree, child, constraints, measurer);
+    let child_layout = tree.node(child).unwrap().value.layout();
+
+    let width = resolve_length(
+      child_layout.size.width,
+      constraints.max_width,
+      intrinsic.width,
+    );
+
+    let height = resolve_length(
+      child_layout.size.height,
+      constraints.max_height,
+      intrinsic.height,
+    );
+
+    match layout.mode {
+      LayoutMode::Flow => match layout.direction {
+        Direction::Horizontal => {
+          child_width += width;
+          child_height = child_height.max(height);
+        }
+        Direction::Vertical => {
+          child_width = child_width.max(width);
+          child_height += height;
+        }
+      },
+      LayoutMode::Stack => {
+        child_width = child_width.max(width);
+        child_height = child_height.max(height);
+      }
+    }
+  }
+
+  ContentSize {
+    width: own_size.width.max(child_width),
+    height: own_size.height.max(child_height),
   }
 }
 
