@@ -13,6 +13,8 @@ pub use gluon_paint::paint;
 
 pub use gluon_style::{Border, BorderSide, Style, TextAlignment, TextStyle};
 
+pub use gluon_text::FontTextMeasurer;
+
 pub use gluon_tree::NodeId;
 
 pub use gluon_wgpu::Renderer;

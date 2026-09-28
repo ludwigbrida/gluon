@@ -245,6 +245,7 @@ dependencies = [
  "gluon-layout",
  "gluon-paint",
  "gluon-style",
+ "gluon-text",
  "gluon-tree",
  "gluon-wgpu",
 ]
@@ -303,6 +304,7 @@ name = "gluon-text"
 version = "0.0.0"
 dependencies = [
  "gluon-compose",
+ "gluon-font",
  "gluon-layout",
  "gluon-style",
 ]

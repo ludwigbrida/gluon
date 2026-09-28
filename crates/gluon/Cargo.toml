@@ -11,5 +11,6 @@ gluon-font = { path = "../gluon-font" }
 gluon-layout = { path = "../gluon-layout" }
 gluon-paint = { path = "../gluon-paint" }
 gluon-style = { path = "../gluon-style" }
+gluon-text = { path = "../gluon-text" }
 gluon-tree = { path = "../gluon-tree" }
 gluon-wgpu = { path = "../gluon-wgpu" }
