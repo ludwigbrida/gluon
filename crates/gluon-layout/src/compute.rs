@@ -1,3 +1,4 @@
+use crate::layout::ContentMeasurer;
 use crate::{
   Alignment, ComputedLayout, Constraints, Direction, LayoutItem, LayoutMode, Length, MainAlignment,
   Padding,
@@ -5,21 +6,29 @@ use crate::{
 use gluon_core::Rect;
 use gluon_tree::{NodeId, Tree};
 
-pub fn compute_layout<T: LayoutItem>(tree: &Tree<T>, viewport: Rect) -> ComputedLayout {
+pub fn compute_layout<T, M>(tree: &Tree<T>, viewport: Rect, measurer: &M) -> ComputedLayout
+where
+  T: LayoutItem,
+  M: ContentMeasurer<T>,
+{
   let mut computed = ComputedLayout::default();
 
-  layout_children(tree, tree.root(), &viewport, &mut computed);
+  layout_children(tree, tree.root(), &viewport, measurer, &mut computed);
   computed.insert(tree.root(), viewport);
 
   computed
 }
 
-fn layout_children<T: LayoutItem>(
+fn layout_children<T, M>(
   tree: &Tree<T>,
   parent: NodeId,
   parent_rect: &Rect,
+  measurer: &M,
   computed: &mut ComputedLayout,
-) {
+) where
+  T: LayoutItem,
+  M: ContentMeasurer<T>,
+{
   let parent_node = tree.node(parent).unwrap();
   let parent_layout = parent_node.value.layout();
   let children = parent_node.children();
@@ -37,10 +46,13 @@ fn layout_children<T: LayoutItem>(
     .map(|&child| {
       let child = tree.node(child).unwrap();
       let layout = child.value.layout();
-      let content_size = child.value.measure_content(Constraints {
-        max_width: content_rect.w,
-        max_height: content_rect.h,
-      });
+      let content_size = measurer.measure(
+        &child.value,
+        Constraints {
+          max_width: content_rect.w,
+          max_height: content_rect.h,
+        },
+      );
 
       match parent_layout.direction {
         Direction::Horizontal => {
@@ -70,10 +82,13 @@ fn layout_children<T: LayoutItem>(
   for &child in children {
     let child_node = tree.node(child).unwrap();
     let layout = *child_node.value.layout();
-    let content_size = child_node.value.measure_content(Constraints {
-      max_width: content_rect.w,
-      max_height: content_rect.h,
-    });
+    let content_size = measurer.measure(
+      &child_node.value,
+      Constraints {
+        max_width: content_rect.w,
+        max_height: content_rect.h,
+      },
+    );
 
     let width = resolve_length(layout.size.width, content_rect.w, content_size.width);
     let height = resolve_length(layout.size.height, content_rect.h, content_size.height);
@@ -129,7 +144,7 @@ fn layout_children<T: LayoutItem>(
       };
     }
 
-    layout_children(tree, child, &rect, computed);
+    layout_children(tree, child, &rect, measurer, computed);
     computed.insert(child, rect);
   }
 }

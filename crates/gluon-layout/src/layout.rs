@@ -82,10 +82,10 @@ pub struct Layout {
 
 pub trait LayoutItem {
   fn layout(&self) -> &Layout;
+}
 
-  fn measure_content(&self, _constraints: Constraints) -> ContentSize {
-    ContentSize::default()
-  }
+pub trait ContentMeasurer<T> {
+  fn measure(&self, item: &T, constraints: Constraints) -> ContentSize;
 }
 
 impl LayoutItem for Layout {

@@ -4,4 +4,6 @@ publish.workspace = true
 edition.workspace = true
 
 [dependencies]
+gluon-compose = { path = "../gluon-compose" }
+gluon-layout = { path = "../gluon-layout" }
 gluon-style = { path = "../gluon-style" }
