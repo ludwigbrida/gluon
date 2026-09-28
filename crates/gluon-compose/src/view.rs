@@ -27,6 +27,15 @@ impl<const N: usize> From<[View; N]> for Children {
   }
 }
 
+impl FromIterator<View> for Children {
+  fn from_iter<T>(iter: T) -> Self
+  where
+    T: IntoIterator<Item = View>,
+  {
+    Self::Views(iter.into_iter().collect())
+  }
+}
+
 impl From<String> for Children {
   fn from(value: String) -> Self {
     Self::Text(value)
