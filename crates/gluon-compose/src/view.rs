@@ -36,6 +36,12 @@ impl FromIterator<View> for Children {
   }
 }
 
+impl From<Option<View>> for Children {
+  fn from(view: Option<View>) -> Self {
+    Self::Views(view.into_iter().collect())
+  }
+}
+
 impl From<String> for Children {
   fn from(value: String) -> Self {
     Self::Text(value)
