@@ -3,12 +3,13 @@ use gluon_core::Viewport;
 use gluon_paint::PaintList;
 use wgpu::util::{BufferInitDescriptor, DeviceExt};
 use wgpu::{
-  BindGroup, BindGroupDescriptor, BindGroupEntry, BlendState, Buffer, BufferUsages,
-  ColorTargetState, ColorWrites, CommandEncoder, Device, FragmentState, LoadOp, MultisampleState,
-  Operations, PrimitiveState, Queue, RenderPassColorAttachment, RenderPassDescriptor,
-  RenderPipeline, RenderPipelineDescriptor, ShaderModuleDescriptor, ShaderSource, StoreOp,
-  TextureFormat, TextureView, VertexAttribute, VertexBufferLayout, VertexFormat, VertexState,
-  VertexStepMode,
+  BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor, BindGroupLayoutEntry,
+  BindingType, BlendState, Buffer, BufferBindingType, BufferUsages, ColorTargetState, ColorWrites,
+  CommandEncoder, Device, FragmentState, LoadOp, MultisampleState, Operations,
+  PipelineLayoutDescriptor, PrimitiveState, Queue, RenderPassColorAttachment, RenderPassDescriptor,
+  RenderPipeline, RenderPipelineDescriptor, ShaderModuleDescriptor, ShaderSource, ShaderStages,
+  StoreOp, TextureFormat, TextureView, VertexAttribute, VertexBufferLayout, VertexFormat,
+  VertexState, VertexStepMode,
 };
 
 #[repr(C)]
@@ -37,14 +38,34 @@ pub struct Renderer {
 
 impl Renderer {
   pub fn new(device: &Device, target_format: TextureFormat) -> Self {
+    let viewport_bind_group_layout = device.create_bind_group_layout(&BindGroupLayoutDescriptor {
+      label: Some("gluon_viewport_bind_group_layout"),
+      entries: &[BindGroupLayoutEntry {
+        binding: 0,
+        visibility: ShaderStages::VERTEX,
+        ty: BindingType::Buffer {
+          ty: BufferBindingType::Uniform,
+          has_dynamic_offset: false,
+          min_binding_size: None,
+        },
+        count: None,
+      }],
+    });
+
     let shader_module = device.create_shader_module(ShaderModuleDescriptor {
       label: Some("gluon_shader_module"),
       source: ShaderSource::Wgsl(include_str!("rect.wgsl").into()),
     });
 
+    let pipeline_layout = device.create_pipeline_layout(&PipelineLayoutDescriptor {
+      label: Some("gluon_rect_pipeline_layout"),
+      bind_group_layouts: &[Some(&viewport_bind_group_layout)],
+      immediate_size: 0,
+    });
+
     let pipeline = device.create_render_pipeline(&RenderPipelineDescriptor {
       label: Some("gluon_pipeline"),
-      layout: None,
+      layout: Some(&pipeline_layout),
       vertex: VertexState {
         module: &shader_module,
         entry_point: Some("vertex_main"),
@@ -97,7 +118,7 @@ impl Renderer {
 
     let viewport_bind_group = device.create_bind_group(&BindGroupDescriptor {
       label: Some("gluon_viewport_bind_group"),
-      layout: &pipeline.get_bind_group_layout(0),
+      layout: &viewport_bind_group_layout,
       entries: &[BindGroupEntry {
         binding: 0,
         resource: viewport_buffer.as_entire_binding(),
