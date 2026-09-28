@@ -3,6 +3,7 @@ use gluon_layout::Layout;
 use gluon_style::Style;
 use gluon_tree::NodeId;
 
+#[derive(Default)]
 pub struct View {
   pub layout: Layout,
   pub style: Style,
