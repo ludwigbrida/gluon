@@ -241,6 +241,7 @@ version = "0.0.0"
 dependencies = [
  "gluon-compose",
  "gluon-core",
+ "gluon-font",
  "gluon-layout",
  "gluon-paint",
  "gluon-style",
@@ -294,6 +295,7 @@ name = "gluon-style"
 version = "0.0.0"
 dependencies = [
  "gluon-core",
+ "gluon-font",
 ]
 
 [[package]]

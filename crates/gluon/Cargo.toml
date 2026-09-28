@@ -7,6 +7,7 @@ edition.workspace = true
 [dependencies]
 gluon-compose = { path = "../gluon-compose" }
 gluon-core = { path = "../gluon-core" }
+gluon-font = { path = "../gluon-font" }
 gluon-layout = { path = "../gluon-layout" }
 gluon-paint = { path = "../gluon-paint" }
 gluon-style = { path = "../gluon-style" }

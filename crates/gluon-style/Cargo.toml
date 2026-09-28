@@ -5,3 +5,4 @@ edition.workspace = true
 
 [dependencies]
 gluon-core = { path = "../gluon-core" }
+gluon-font = { path = "../gluon-font" }

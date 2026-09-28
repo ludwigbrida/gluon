@@ -1,5 +1,6 @@
 use gluon_core::Color;
 use gluon_core::Pixels;
+use gluon_font::FontId;
 
 #[derive(Default)]
 pub struct Style {
@@ -30,6 +31,7 @@ pub enum TextAlignment {
 }
 
 pub struct TextStyle {
+  pub font: FontId,
   pub color: Color,
   pub size: Pixels,
   pub alignment: TextAlignment,
