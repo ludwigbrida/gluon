@@ -82,22 +82,23 @@ impl GlyphAtlas {
     fonts: &FontStore,
     font: FontId,
     character: char,
-    size: Pixels,
+    logical_size: Pixels,
+    scale_factor: f32,
     queue: &Queue,
   ) -> Option<AtlasGlyph> {
-    let size = Pixels::new(size.0.max(0.0));
+    let physical_size = Pixels::new(logical_size.0.max(0.0) * scale_factor);
 
     let key = GlyphKey {
       font,
       character,
-      size_bits: size.0.to_bits(),
+      size_bits: physical_size.0.to_bits(),
     };
 
     if let Some(glyph) = self.glyphs.get(&key) {
       return Some(*glyph);
     }
 
-    let glyph = fonts.rasterize(font, character, size)?;
+    let glyph = fonts.rasterize(font, character, physical_size)?;
 
     if glyph.width > ATLAS_SIZE || glyph.height > ATLAS_SIZE {
       return None;

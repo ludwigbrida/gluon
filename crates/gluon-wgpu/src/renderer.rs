@@ -276,6 +276,14 @@ impl Renderer {
     encoder: &mut CommandEncoder,
     target: &TextureView,
   ) {
+    if viewport.physical_width == 0
+      || viewport.physical_height == 0
+      || !viewport.scale_factor.0.is_finite()
+      || viewport.scale_factor.0 <= 0.0
+    {
+      return;
+    }
+
     let mut rect_instances = Vec::new();
     let mut glyph_instances = Vec::new();
     let mut commands = Vec::new();
@@ -291,9 +299,13 @@ impl Renderer {
           commands.push(DrawCommand::Rect(rect_instances.len() - 1));
         }
         PaintCommand::Text(text) => {
-          if let Some((start, count)) =
-            self.append_text_run(text, fonts, queue, &mut glyph_instances)
-          {
+          if let Some((start, count)) = self.append_text_run(
+            text,
+            fonts,
+            viewport.scale_factor.0,
+            queue,
+            &mut glyph_instances,
+          ) {
             if count != 0 {
               commands.push(DrawCommand::Glyphs { start, count });
             }
@@ -302,12 +314,7 @@ impl Renderer {
       }
     }
 
-    if commands.is_empty()
-      || viewport.physical_width == 0
-      || viewport.physical_height == 0
-      || !viewport.scale_factor.0.is_finite()
-      || viewport.scale_factor.0 <= 0.0
-    {
+    if commands.is_empty() {
       return;
     }
 
@@ -404,20 +411,23 @@ impl Renderer {
     &mut self,
     text: &TextRun,
     fonts: &FontStore,
+    scale_factor: f32,
     queue: &Queue,
     instances: &mut Vec<GlyphInstance>,
   ) -> Option<(usize, usize)> {
     let line = fonts.line_metrics(text.font, text.size)?;
+    let inverse_scale = 1.0 / scale_factor;
 
     let mut glyphs = Vec::with_capacity(text.text.chars().count());
     let mut width = 0.0;
 
     for character in text.text.chars() {
-      let glyph = self
-        .glyph_atlas
-        .glyph(fonts, text.font, character, text.size, queue)?;
+      let glyph =
+        self
+          .glyph_atlas
+          .glyph(fonts, text.font, character, text.size, scale_factor, queue)?;
 
-      width += glyph.advance;
+      width += glyph.advance * inverse_scale;
       glyphs.push(glyph);
     }
 
@@ -433,10 +443,10 @@ impl Renderer {
       if glyph.width != 0 && glyph.height != 0 {
         instances.push(GlyphInstance {
           rect: [
-            pen_x + glyph.left,
-            baseline_y - glyph.bottom - glyph.height as f32,
-            glyph.width as f32,
-            glyph.height as f32,
+            pen_x + glyph.left * inverse_scale,
+            baseline_y - glyph.bottom * inverse_scale - glyph.height as f32 * inverse_scale,
+            glyph.width as f32 * inverse_scale,
+            glyph.height as f32 * inverse_scale,
           ],
           uv: [
             glyph.x as f32 / atlas_size,
@@ -448,7 +458,7 @@ impl Renderer {
         });
       }
 
-      pen_x += glyph.advance;
+      pen_x += glyph.advance * inverse_scale;
     }
 
     Some((start, instances.len() - start))
