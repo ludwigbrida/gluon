@@ -11,7 +11,7 @@ pub use gluon_layout::{
   StackAlignment, compute_layout,
 };
 
-pub use gluon_paint::paint;
+pub use gluon_paint::{PaintCommand, PaintList, TextRun, paint};
 
 pub use gluon_style::{Border, BorderSide, Style, TextAlignment, TextStyle};
 

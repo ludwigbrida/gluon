@@ -1,5 +1,6 @@
 use bytemuck::{Pod, Zeroable, bytes_of, cast_slice};
-use gluon_core::{DisplayList, Viewport};
+use gluon_core::Viewport;
+use gluon_paint::PaintList;
 use wgpu::util::{BufferInitDescriptor, DeviceExt};
 use wgpu::{
   BindGroup, BindGroupDescriptor, BindGroupEntry, BlendState, Buffer, BufferUsages,
@@ -115,13 +116,13 @@ impl Renderer {
 
   pub fn render(
     &mut self,
-    display_list: &DisplayList,
+    paint_list: &PaintList,
     viewport: Viewport,
     queue: &Queue,
     encoder: &mut CommandEncoder,
     target: &TextureView,
   ) {
-    let instances: Vec<_> = display_list
+    let instances: Vec<_> = paint_list
       .rects()
       .map(|(rect, color)| RectInstance {
         rect: [rect.x, rect.y, rect.w, rect.h],

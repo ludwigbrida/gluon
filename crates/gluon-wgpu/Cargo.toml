@@ -6,4 +6,5 @@ edition.workspace = true
 [dependencies]
 bytemuck = { version = "1.25.2", features = ["derive"] }
 gluon-core = { path = "../gluon-core" }
+gluon-paint = { path = "../gluon-paint" }
 wgpu = "30.0.1"

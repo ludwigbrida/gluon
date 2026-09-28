@@ -22,7 +22,7 @@ pub struct BorderSide {
   pub color: Color,
 }
 
-#[derive(Default)]
+#[derive(Default, Clone, Copy)]
 pub enum TextAlignment {
   #[default]
   Start,
