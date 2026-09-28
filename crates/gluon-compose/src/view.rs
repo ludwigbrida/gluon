@@ -2,7 +2,6 @@ use crate::{Composition, Content, Element};
 use gluon_layout::Layout;
 use gluon_style::Style;
 use gluon_tree::NodeId;
-use std::vec::IntoIter;
 
 pub struct View {
   pub layout: Layout,
@@ -16,15 +15,6 @@ pub struct Children(Vec<View>);
 impl<const N: usize> From<[View; N]> for Children {
   fn from(views: [View; N]) -> Self {
     Self(views.into())
-  }
-}
-
-impl IntoIterator for Children {
-  type Item = View;
-  type IntoIter = IntoIter<View>;
-
-  fn into_iter(self) -> Self::IntoIter {
-    self.0.into_iter()
   }
 }
 
@@ -45,7 +35,7 @@ impl View {
 
     let root = composition.root();
 
-    for child in children {
+    for child in children.0 {
       child.mount_into(&mut composition, root);
     }
 
@@ -70,7 +60,7 @@ impl View {
       )
       .unwrap();
 
-    for child in children {
+    for child in children.0 {
       child.mount_into(composition, node);
     }
   }
