@@ -1,0 +1,7 @@
+[package]
+name = "gluon-font"
+publish.workspace = true
+edition.workspace = true
+
+[dependencies]
+fontdue = "0.9.4"
