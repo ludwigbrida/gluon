@@ -1,4 +1,4 @@
-pub use gluon_compose::{Composition, Content, Element};
+pub use gluon_compose::{Children, Composition, Content, Element, View};
 
 pub use gluon_core::{Color, Pixels, ScaleFactor, Viewport};
 
