@@ -39,8 +39,14 @@ impl From<&str> for Children {
   }
 }
 
+impl From<View> for Composition {
+  fn from(view: View) -> Self {
+    view.into_composition()
+  }
+}
+
 impl View {
-  pub fn into_composition(self) -> Composition {
+  fn into_composition(self) -> Composition {
     let View {
       layout,
       style,
