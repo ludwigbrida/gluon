@@ -2,7 +2,9 @@ pub use gluon_compose::{Composition, Content, Element};
 
 pub use gluon_core::{Color, Pixels, ScaleFactor, Viewport};
 
-pub use gluon_font::{FontId, FontLoadError, FontStore, GlyphMetrics, LineMetrics};
+pub use gluon_font::{
+  FontId, FontLoadError, FontStore, GlyphMetrics, LineMetrics, RasterizedGlyph,
+};
 
 pub use gluon_layout::{
   Alignment, ComputedLayout, Direction, Layout, LayoutMode, Length, MainAlignment, Padding, Size,

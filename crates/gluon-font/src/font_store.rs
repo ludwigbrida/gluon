@@ -1,4 +1,4 @@
-use crate::{FontId, GlyphMetrics, LineMetrics};
+use crate::{FontId, GlyphMetrics, LineMetrics, RasterizedGlyph};
 use fontdue::{Font, FontSettings};
 use gluon_core::Pixels;
 
@@ -40,6 +40,20 @@ impl FontStore {
       ascent: Pixels::new(metrics.ascent),
       descent: Pixels::new(metrics.descent),
       height: Pixels::new(metrics.new_line_size),
+    })
+  }
+
+  pub fn rasterize(&self, font: FontId, character: char, size: Pixels) -> Option<RasterizedGlyph> {
+    let font = self.fonts.get(font.0)?;
+    let (metrics, coverage) = font.rasterize(character, size.0.max(0.0));
+
+    Some(RasterizedGlyph {
+      left: Pixels::new(metrics.xmin as f32),
+      bottom: Pixels::new(metrics.ymin as f32),
+      width: metrics.width as u32,
+      height: metrics.height as u32,
+      advance: Pixels::new(metrics.advance_width),
+      coverage,
     })
   }
 }
