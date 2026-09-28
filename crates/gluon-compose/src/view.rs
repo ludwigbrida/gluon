@@ -9,17 +9,24 @@ pub struct View {
   pub children: Children,
 }
 
-#[derive(Default)]
-pub struct Children(Vec<View>);
+pub enum Children {
+  Views(Vec<View>),
+  Text(String),
+}
+
+impl Default for Children {
+  fn default() -> Self {
+    Self::Views(Vec::new())
+  }
+}
 
 impl<const N: usize> From<[View; N]> for Children {
   fn from(views: [View; N]) -> Self {
-    Self(views.into())
+    Self::Views(views.into())
   }
 }
 
 impl View {
-  // todo: make crate-public
   pub fn into_composition(self) -> Composition {
     let View {
       layout,
@@ -27,15 +34,16 @@ impl View {
       children,
     } = self;
 
+    let (content, children) = children.into_parts();
     let mut composition = Composition::new(Element {
       layout,
       style,
-      content: Content::Empty,
+      content,
     });
 
     let root = composition.root();
 
-    for child in children.0 {
+    for child in children {
       child.mount_into(&mut composition, root);
     }
 
@@ -49,19 +57,29 @@ impl View {
       children,
     } = self;
 
+    let (content, children) = children.into_parts();
     let node = composition
       .append_child(
         parent,
         Element {
           layout,
           style,
-          content: Content::Empty,
+          content,
         },
       )
       .unwrap();
 
-    for child in children.0 {
+    for child in children {
       child.mount_into(composition, node);
+    }
+  }
+}
+
+impl Children {
+  fn into_parts(self) -> (Content, Vec<View>) {
+    match self {
+      Self::Views(views) => (Content::Empty, views),
+      Self::Text(value) => (Content::Text(value), Vec::new()),
     }
   }
 }
