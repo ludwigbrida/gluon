@@ -8,6 +8,7 @@ use wgpu::{
 };
 
 const ATLAS_SIZE: u32 = 1024;
+const GLYPH_PADDING: u32 = 1;
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 struct GlyphKey {
@@ -100,23 +101,29 @@ impl GlyphAtlas {
 
     let glyph = fonts.rasterize(font, character, physical_size)?;
 
-    if glyph.width > ATLAS_SIZE || glyph.height > ATLAS_SIZE {
+    let allocated_width = glyph.width + GLYPH_PADDING * 2;
+    let allocated_height = glyph.height + GLYPH_PADDING * 2;
+
+    if allocated_width > ATLAS_SIZE || allocated_height > ATLAS_SIZE {
       return None;
     }
 
-    if self.cursor_x + glyph.width > ATLAS_SIZE {
+    if self.cursor_x + allocated_width > ATLAS_SIZE {
       self.cursor_x = 0;
       self.cursor_y += self.row_height;
       self.row_height = 0;
     }
 
-    if self.cursor_y + glyph.height > ATLAS_SIZE {
+    if self.cursor_y + allocated_height > ATLAS_SIZE {
       return None;
     }
 
+    let allocation_x = self.cursor_x;
+    let allocation_y = self.cursor_y;
+
     let atlas_glyph = AtlasGlyph {
-      x: self.cursor_x,
-      y: self.cursor_y,
+      x: allocation_x + GLYPH_PADDING,
+      y: allocation_y + GLYPH_PADDING,
       width: glyph.width,
       height: glyph.height,
       left: glyph.left.0,
@@ -124,30 +131,43 @@ impl GlyphAtlas {
       advance: glyph.advance.0,
     };
 
-    self.cursor_x += glyph.width;
-    self.row_height = self.row_height.max(glyph.height);
+    self.cursor_x += allocated_width;
+    self.row_height = self.row_height.max(allocated_height);
 
     if glyph.width != 0 && glyph.height != 0 {
+      let mut texels = vec![0; (allocated_width * allocated_height) as usize];
+
+      for row in 0..glyph.height as usize {
+        let source_start = row * glyph.width as usize;
+        let source_end = source_start + glyph.width as usize;
+
+        let target_start =
+          (row + GLYPH_PADDING as usize) * allocated_width as usize + GLYPH_PADDING as usize;
+
+        texels[target_start..target_start + glyph.width as usize]
+          .copy_from_slice(&glyph.coverage[source_start..source_end]);
+      }
+
       queue.write_texture(
         TexelCopyTextureInfo {
           texture: &self.texture,
           mip_level: 0,
           origin: Origin3d {
-            x: atlas_glyph.x,
-            y: atlas_glyph.y,
+            x: allocation_x,
+            y: allocation_y,
             z: 0,
           },
           aspect: TextureAspect::All,
         },
-        &glyph.coverage,
+        &texels,
         TexelCopyBufferLayout {
           offset: 0,
-          bytes_per_row: Some(glyph.width),
-          rows_per_image: Some(glyph.height),
+          bytes_per_row: Some(allocated_width),
+          rows_per_image: Some(allocated_height),
         },
         Extent3d {
-          width: glyph.width,
-          height: glyph.height,
+          width: allocated_width,
+          height: allocated_height,
           depth_or_array_layers: 1,
         },
       );
