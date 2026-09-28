@@ -437,14 +437,20 @@ impl Renderer {
     let baseline_y =
       text.bounds.y + ((text.bounds.h - line.height.0) * 0.5).max(0.0) + line.ascent.0;
 
+    let physical_baseline_y = (baseline_y * scale_factor).round();
+
     let atlas_size = 1024.0;
 
     for glyph in glyphs {
       if glyph.width != 0 && glyph.height != 0 {
+        let physical_x = ((pen_x + glyph.left * inverse_scale) * scale_factor).round();
+
+        let physical_y = physical_baseline_y - glyph.bottom - glyph.height as f32;
+
         instances.push(GlyphInstance {
           rect: [
-            pen_x + glyph.left * inverse_scale,
-            baseline_y - glyph.bottom * inverse_scale - glyph.height as f32 * inverse_scale,
+            physical_x * inverse_scale,
+            physical_y * inverse_scale,
             glyph.width as f32 * inverse_scale,
             glyph.height as f32 * inverse_scale,
           ],
