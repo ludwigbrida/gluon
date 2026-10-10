@@ -6,6 +6,8 @@ use crate::{
 use gluon_core::Rect;
 use gluon_tree::{NodeId, Tree};
 
+const ROOT_FONT_SIZE: f32 = 16.0;
+
 pub fn compute_layout<T, M>(tree: &Tree<T>, viewport: Rect, measurer: &M) -> ComputedLayout
 where
   T: LayoutItem,
@@ -221,10 +223,10 @@ where
 }
 
 fn content_rect(rect: &Rect, padding: Padding) -> Rect {
-  let left = rect.w * padding.left.max(0.0);
-  let right = rect.w * padding.right.max(0.0);
-  let top = rect.h * padding.top.max(0.0);
-  let bottom = rect.h * padding.bottom.max(0.0);
+  let left = rem_to_pixels(padding.left.0);
+  let right = rem_to_pixels(padding.right.0);
+  let top = rem_to_pixels(padding.top.0);
+  let bottom = rem_to_pixels(padding.bottom.0);
 
   Rect {
     x: rect.x + left,
@@ -250,19 +252,15 @@ fn align(start: f32, available: f32, size: f32, alignment: Alignment) -> f32 {
 }
 
 fn expand_for_padding(size: ContentSize, padding: Padding) -> ContentSize {
-  let horizontal = 1.0 - padding.left.max(0.0) - padding.right.max(0.0);
-  let vertical = 1.0 - padding.top.max(0.0) - padding.bottom.max(0.0);
+  let horizontal = rem_to_pixels(padding.left.0) + rem_to_pixels(padding.right.0);
+  let vertical = rem_to_pixels(padding.top.0) + rem_to_pixels(padding.bottom.0);
 
   ContentSize {
-    width: if horizontal > 0.0 {
-      size.width / horizontal
-    } else {
-      0.0
-    },
-    height: if vertical > 0.0 {
-      size.height / vertical
-    } else {
-      0.0
-    },
+    width: size.width + horizontal,
+    height: size.height + vertical,
   }
+}
+
+fn rem_to_pixels(rem: f32) -> f32 {
+  rem.max(0.0) * ROOT_FONT_SIZE
 }

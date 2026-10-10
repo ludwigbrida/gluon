@@ -61,11 +61,14 @@ pub struct StackAlignment {
 }
 
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
+pub struct Rem(pub f32);
+
+#[derive(Debug, Default, Clone, Copy, PartialEq)]
 pub struct Padding {
-  pub top: f32,
-  pub right: f32,
-  pub bottom: f32,
-  pub left: f32,
+  pub top: Rem,
+  pub right: Rem,
+  pub bottom: Rem,
+  pub left: Rem,
 }
 
 #[derive(Debug, Default, Clone, Copy, PartialEq)]

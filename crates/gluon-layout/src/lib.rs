@@ -6,5 +6,5 @@ pub use compute::compute_layout;
 pub use computed_layout::ComputedLayout;
 pub use layout::{
   Alignment, Constraints, ContentMeasurer, ContentSize, Direction, Layout, LayoutItem, LayoutMode,
-  Length, MainAlignment, Padding, Size, StackAlignment,
+  Length, MainAlignment, Padding, Rem, Size, StackAlignment,
 };

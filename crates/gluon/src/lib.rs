@@ -7,8 +7,8 @@ pub use gluon_font::{
 };
 
 pub use gluon_layout::{
-  Alignment, ComputedLayout, Direction, Layout, LayoutMode, Length, MainAlignment, Padding, Size,
-  StackAlignment, compute_layout,
+  Alignment, ComputedLayout, Direction, Layout, LayoutMode, Length, MainAlignment, Padding, Rem,
+  Size, StackAlignment, compute_layout,
 };
 
 pub use gluon_paint::{PaintCommand, PaintList, TextRun, paint};
