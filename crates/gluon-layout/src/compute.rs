@@ -239,6 +239,8 @@ fn content_rect(rect: &Rect, padding: Padding) -> Rect {
 fn resolve_length(length: Length, available: f32, content: f32) -> f32 {
   match length {
     Length::Content => content.max(0.0),
+    Length::Pixels(pixels) if pixels.is_finite() => pixels.max(0.0),
+    Length::Pixels(_) => 0.0,
     Length::Fraction(fraction) => available * fraction.max(0.0),
   }
 }

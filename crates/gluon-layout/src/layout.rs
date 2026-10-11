@@ -2,6 +2,7 @@
 pub enum Length {
   #[default]
   Content,
+  Pixels(f32),
   Fraction(f32),
 }
 
