@@ -1,10 +1,11 @@
-use crate::{Composition, Content, Element};
+use crate::{Composition, Content, Element, ViewId};
 use gluon_layout::Layout;
 use gluon_style::Style;
 use gluon_tree::NodeId;
 
 #[derive(Default)]
 pub struct View {
+  pub id: Option<ViewId>,
   pub layout: Layout,
   pub style: Style,
   pub children: Children,
@@ -63,6 +64,7 @@ impl From<View> for Composition {
 impl View {
   fn into_composition(self) -> Composition {
     let View {
+      id,
       layout,
       style,
       children,
@@ -70,6 +72,7 @@ impl View {
 
     let (content, children) = children.into_parts();
     let mut composition = Composition::new(Element {
+      id,
       layout,
       style,
       content,
@@ -86,6 +89,7 @@ impl View {
 
   fn mount_into(self, composition: &mut Composition, parent: NodeId) {
     let View {
+      id,
       layout,
       style,
       children,
@@ -96,6 +100,7 @@ impl View {
       .append_child(
         parent,
         Element {
+          id,
           layout,
           style,
           content,
