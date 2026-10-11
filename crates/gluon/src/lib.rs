@@ -1,4 +1,8 @@
-pub use gluon_compose::{Children, Composition, Content, Element, View};
+pub use gluon_compose::{
+  Children, Composition, Content, Element, PointerButton, PointerDispatcher, PointerEvent,
+  PointerEventKind, TargetedPointerEvent, View, ViewId, dispatch_pointer_event, hit_test,
+  hit_test_view,
+};
 
 pub use gluon_core::{Color, Pixels, ScaleFactor, Viewport};
 
